@@ -19,6 +19,6 @@ merge_layers a b = let
     cmp layer_1 layer_2
         | layer_1 == 2 = layer_2
         | otherwise = layer_1
-    in chunksOf 25 (zipWith cmp (concat a) (concat b)) 
+    in zipWith (zipWith cmp) a b
 
 digits n = map (\x -> read [x] :: Int) (n)
