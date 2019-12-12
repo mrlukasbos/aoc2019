@@ -1,7 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# OPTIONS_GHC -Wall -Werror #-}
 
 import Debug.Trace
+import Data.List
+import qualified Data.List.Split as Split
+import Data.Ord
 import qualified Data.Map.Strict as Map
 
 data Dir = U | R | D | L deriving (Eq,Ord,Enum,Show)
@@ -17,7 +19,52 @@ day_11a :: IO ()
 day_11a = do
     text <- readFile "input.txt"
     let program = (map (\ln -> read ln :: Int) (split ',' ((lines text) !! 0))) ++ repeat 0
-    print $ length (location_map (last (runRobot program))) -- (runRobot program) -- length (location_map (runRobot program))
+    print $ length (location_map (last (runRobot program 0))) -- (runRobot program) -- length (location_map (runRobot program))
+
+
+day_11b :: IO ()
+day_11b = do
+    text <- readFile "input.txt"
+    let program = (map (\ln -> read ln :: Int) (split ',' ((lines text) !! 0))) ++ repeat 0
+    print $ values (location_map (last (runRobot program 1))) -- (runRobot program) -- length (location_map (runRobot program))
+
+
+    
+sorted_on_x :: Map.Map (Int, Int) Int -> [(Int, Int)]
+sorted_on_x locations_map = sortBy (comparing (fst)) (Map.keys locations_map)
+
+sorted_on_y :: Map.Map (Int, Int) Int -> [(Int, Int)]
+sorted_on_y locations_map = sortBy (comparing (snd)) (Map.keys locations_map)
+
+range_x locations_map = (abs ((fst (head $ sorted_on_x locations_map)) - (fst (last $ sorted_on_x locations_map))))
+range_y locations_map = (abs ((snd (head $ sorted_on_y locations_map)) - (snd (last $ sorted_on_y locations_map))))
+
+
+get_for_y locations_map y = filter (\obj -> snd (fst obj) == y) (Map.toList locations_map)
+
+
+strip_y :: [((a, b), c)] -> [(b, c)]
+strip_y arr = map (\((a, b), c) -> (b, c)) arr 
+
+values locations_map = tostr locations_map
+
+arr :: Map.Map (Int, Int) Int -> [[((Int, Int), Int)]]
+arr locations_map = filter (/= []) $ map (get_for_y locations_map) [-10..]
+
+
+tostr :: Map.Map (Int, Int) Int -> [[Char]]
+tostr locations_map = map get_char_row (arr locations_map)
+
+
+get_char_row row = map get_disp_val row
+
+get_disp_val val = disp (snd val)
+
+disp :: Int -> Char
+disp val 
+    | val == 0 = ' '
+    | val == 1 = '#'
+    | otherwise = '?'
 
 -- return a new direction after turning
 turn :: Int -> Dir -> Dir
@@ -50,13 +97,13 @@ get_current_location_color RobotState{..} = Map.findWithDefault 0 location locat
 
 -- we must know where we are now (to paint it and to determine where we have to go) (variable location)
 -- we must know the colors of all locations  (variable location_map)
-runRobot :: [Int] -> [RobotState]
-runRobot program = all_states
+runRobot :: [Int] -> Int -> [RobotState]
+runRobot program color = all_states
     where 
         start_position = (0,0)
 
         initial_state = RobotState {
-            location_map = Map.singleton start_position 0, -- singleton is a map with one element
+            location_map = Map.singleton start_position color, -- singleton is a map with one element
             location = start_position,
             direction = U,
             instructions = outputs
@@ -73,7 +120,7 @@ doRobotStep RobotState{..} = case instructions of -- this makes everything insid
         let new_direction = trace ((show direction) ++ " to " ++ (show  (turn rotation direction))) $ turn rotation direction
             new_location = move new_direction location
         in Just RobotState { 
-            location_map = Map.insert new_location color location_map, 
+            location_map = Map.insert location color location_map,  -- color here is shady
             location = new_location, 
             direction = new_direction, 
             instructions = rest
