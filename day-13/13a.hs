@@ -25,7 +25,7 @@ day_13b = do
     let program = replace ((map (\ln -> read ln :: Int) (split ',' ((lines text) !! 0))) ++ repeat 0) 0 2 -- replace the first memory address with 2
     print $ solve program
 
-solve program = calc initial_program_state where
+solve program = calc initial_program_state Map.empty where
     initial_program_state = ProgramState {
         memory = program,
         pc = 0,
@@ -36,13 +36,13 @@ solve program = calc initial_program_state where
     }
 
 
-calc state = let
+calc state known_map = let
 
     -- this calculates the new output
     new_process_state = process state 
     outs = outputs new_process_state
     chunks = Split.chunksOf 3 outs
-    game_state = Map.fromList (map output_ins_to_tup chunks)
+    game_state = Map.union (Map.fromList (map output_ins_to_tup chunks)) known_map
 
     blocks = Map.toList (Map.filter (==2) game_state)
     paddle = fst $ head (Map.toList (Map.filter (==3) game_state))
@@ -51,13 +51,14 @@ calc state = let
 
     -- generate a new state to calculate with given inputs
     new_process_state_with_new_input = new_process_state {
+        outputs = [],
         inputs = {-trace ("setting input" ++ (show (comp_pos ball paddle))) $ -} [(comp_pos ball paddle)]
     }
 
     exec
         | (finished state) = error "unexpected finish"
         | (blocks == []) = score
-        | otherwise = trace ({-"paddle location " ++ (show paddle) ++ " - ball location: " ++ (show ball) ++ -}"Score: " ++ (show score) ++  " - Blocks: " ++ (show (length blocks))) $ calc new_process_state_with_new_input
+        | otherwise = trace ({-"paddle location " ++ (show paddle) ++ " - ball location: " ++ (show ball) ++ -}"Score: " ++ (show score) ++  " - Blocks: " ++ (show (length blocks))) $ calc new_process_state_with_new_input game_state
     in exec
 
   
@@ -163,3 +164,6 @@ digits n = map (\x -> read [x] :: Int) (show n)
 split :: Eq a => a -> [a] -> [[a]]
 split _ [] = []
 split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
+
+-- a: 309
+-- b: 15410
