@@ -2,21 +2,19 @@
 
 import Data.List
 
-
 data Moon = Moon {
     identifier :: Int, -- useful for debugging
-    pos :: (Int, Int, Int),
-    vel :: (Int, Int, Int)
-} deriving (Show)
+    pos :: Int,
+    vel :: Int
+} deriving (Show, Eq)
 
+day_12b = gcds [(do_steps_with_mem (all_moons initial_positions_x) (all_moons initial_positions_x) 0), (do_steps_with_mem (all_moons initial_positions_y) (all_moons initial_positions_y) 0), (do_steps_with_mem (all_moons initial_positions_z) (all_moons initial_positions_z) 0)]
 
-day_12a steps = sum $ map total_energy (do_steps all_moons 0 steps) -- get the sum of total energy of the system
-
-
-do_steps_with_mem :: [Moon] -> Int -> Int -> [Moon]
-do_steps_with_mem moons amount max_amount
-    | amount >= max_amount = moons
-    | otherwise = do_steps (do_step moons) (amount + 1) max_amount
+do_steps_with_mem :: [Moon] -> [Moon] -> Int -> Int
+do_steps_with_mem mem ref iteration
+    | (new_moon == ref) = (iteration + 1)
+    | otherwise =  do_steps_with_mem new_moon ref  (iteration + 1)
+    where new_moon = (do_step mem)
 
 
 do_steps :: [Moon] -> Int -> Int -> [Moon]
@@ -24,21 +22,19 @@ do_steps moons amount max_amount
     | amount >= max_amount = moons
     | otherwise = do_steps (do_step moons) (amount + 1) max_amount
 
-initial_positions :: [(Int, Int, Int)]
-initial_positions = [(-1, 7, 3), 
-                    (12, 2, -13), 
-                    (14, 18, -8), 
-                    (17, 4, -4)]
+initial_positions_x = [-1, 12, 14, 17]
+initial_positions_y = [7, 2, 18, 4]
+initial_positions_z = [3, -13, -8, -4]
 
-create_new_moon :: Int -> (Int, Int, Int) -> Moon                 
+create_new_moon :: Int -> Int -> Moon                 
 create_new_moon ident init_pos = Moon {
     identifier = ident,
     pos = init_pos,
-    vel = (0,0,0)
+    vel = 0
 }
 
-all_moons :: [Moon]
-all_moons = zipWith create_new_moon [0..] initial_positions
+all_moons :: [Int] -> [Moon]
+all_moons positions = zipWith create_new_moon [0..] positions
 
 
 do_step :: [Moon] -> [Moon]
@@ -51,7 +47,7 @@ apply_velocities moons = map apply_velocity moons
 apply_velocity :: Moon -> Moon
 apply_velocity Moon{..} = Moon {
     identifier = identifier,
-    pos = add_tup pos vel,
+    pos = pos + vel,
     vel = vel
 }
 
@@ -65,10 +61,10 @@ compare_moon_with_moons other_moons moon = foldl (compare_moons) moon other_moon
 -- compare a moon with another moon and return the new 'moon state'
 compare_moons :: Moon -> Moon -> Moon
 compare_moons current_moon other_moon = let 
-    (pcx, pcy, pcz) = pos current_moon
-    (pox, poy, poz) = pos other_moon
-    new_vel_diff = ((calc_acc pcx pox), (calc_acc pcy poy), (calc_acc pcz poz))
-    new_vel = add_tup (vel current_moon) new_vel_diff
+    pc = pos current_moon
+    po = pos other_moon
+    new_vel_diff = (calc_acc pc po)
+    new_vel = (vel current_moon) + new_vel_diff
 
     in Moon {
         identifier = identifier current_moon,
@@ -83,18 +79,8 @@ calc_acc a b
     | a > b = -1
     | otherwise = 0
 
--- add one tuple to another
-add_tup :: (Int, Int, Int) -> (Int, Int, Int) -> (Int, Int, Int)
-add_tup (a0, b0, c0) (a1, b1, c1) = (a0+a1, b0+b1, c0+c1) 
 
-
-pairs :: [a] -> [(a, a)]
-pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
-
-
-potential_energy Moon{..} = sum_of_abs_coords pos
-kinetic_energy Moon{..} = sum_of_abs_coords vel
-total_energy moon = (potential_energy moon) * (kinetic_energy moon)
-
-sum_of_abs_coords :: (Int, Int, Int) -> Int
-sum_of_abs_coords (a,b,c) = sum [abs a, abs b, abs c]
+gcds :: (Integral a) => [a] -> a
+gcds [] = 1
+gcds [x] = x
+gcds (x:xs) = lcm x (gcds xs)
