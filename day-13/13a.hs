@@ -6,19 +6,6 @@ import qualified Data.List.Split as Split
 import Data.Ord
 import qualified Data.Map.Strict as Map
 
-
-
-
--- day_13a :: IO ()
--- day_13a = do
---     text <- readFile "input.txt"
---     let program = (map (\ln -> read ln :: Int) (split ',' ((lines text) !! 0))) ++ repeat 0
---     print $ length $ filter (\((a, b), c) -> c == 2) (Map.toList (Map.fromList $ (map output_ins_to_tup (Split.chunksOf 3 (process program 0 0 [] [])))))
-
-
-
-
-
 day_13b :: IO ()
 day_13b = do
     text <- readFile "input.txt"
@@ -77,17 +64,6 @@ output_ins_to_tup ls
     | otherwise = error "something went wrong"
 
 -- /////// INTCODE COMPUTER ///////
-
--- calc program program_input = let 
---     initial_program_state = ProgramState {
---         memory = program,
---         pc = 0,
---         base = 0,
---         outputs = [],
---         inputs = program_input
---     }
-
---     in process initial_program_state
 
 data ProgramState = ProgramState {
     memory :: [Int],
