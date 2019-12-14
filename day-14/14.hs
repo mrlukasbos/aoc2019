@@ -19,7 +19,7 @@ day_14a = do
     let split_2 = map (map item_to_tup) (map (concat) split_1)
     let conversions = map to_conversion split_2
     let fuel_conv = get_conversion_by_result_str "FUEL" conversions
-    print $ calc conversions (Map.fromList (ingredients (fromJust fuel_conv)))
+    print $ calc conversions (Map.fromList (ingredients (fromJust fuel_conv))) Map.empty
 
 to_conversion :: [(String, Int)] -> Conversion
 to_conversion items = Conversion {
@@ -42,7 +42,7 @@ has_ingredient_str str conversion  = (filter (\(name, _) -> name == str) (ingred
 
 -- increase the factor of conversions until 'result' satisfies 'amount'
 get_requested_conversion :: Conversion -> Int -> Int -> Conversion
-get_requested_conversion conversion factor amount
+get_requested_conversion conversion factor amount  
     | (snd (result new_conversion)) >= amount = new_conversion
     | otherwise = get_requested_conversion conversion (factor + 1) amount
         where new_conversion = scale_conversion conversion factor 
@@ -53,17 +53,33 @@ scale_conversion conversion factor = conversion {
     ingredients = map (scale_item factor) (ingredients conversion),
     result = scale_item factor (result conversion)
 }
+
+-- scales 
 scale_item :: Int -> (String, Int) -> (String, Int)
 scale_item factor (a,b) = (a, b * factor) 
 
-calc :: [Conversion] -> Map.Map String Int -> Int
-calc all_conversions requested_ingredients 
-    | length ingredient_list == length (filter (\ing -> ("ORE" == (fst ing))) ingredient_list) = sum (map snd ingredient_list) -- if we only need ore return the sum of requested ore
-    | otherwise = trace (show ingredient_list) $ calc all_conversions newly_requested_ingredients
+calc :: [Conversion] -> Map.Map String Int -> Map.Map String Int -> Int
+calc all_conversions requested_ingredients leftovers
+    | length full_ingredient_list == length (filter (\ing -> ("ORE" == (fst ing))) full_ingredient_list) = sum (map snd full_ingredient_list) -- if we only need ore return the sum of requested ore
+    | otherwise = trace (show full_ingredient_list) $ calc all_conversions newly_requested_ingredients final_left_overs
         where 
-            ingredient_list =  (Map.toList requested_ingredients)
-            requested_conversions = map (\ingredient -> get_requested_conversion (fromJust (get_conversion_by_result_str (fst ingredient) all_conversions)) 1 (snd ingredient)) ingredient_list
-            newly_requested_ingredients = Map.fromListWith (+) (concat (map (ingredients) requested_conversions))
+            full_ingredient_list = (Map.toList requested_ingredients)
+            ores = filter (\ing -> (fst ing) == "ORE") full_ingredient_list
+            requested = filter (\ing -> (fst ing) /= "ORE") full_ingredient_list
+
+            requested_conversions_unfiltered = map (get_conversion_for_ingredient all_conversions leftovers) requested
+            requested_conversions = catMaybes requested_conversions_unfiltered
+
+            -- calculate the leftovers: Map name amount_left
+            new_left_overs = Map.fromList $ zipWith (\conversion request -> ((fst request), (snd (result conversion)) - (snd request))) requested_conversions requested
+            final_left_overs = trace (show (Map.unionWith (+) leftovers new_left_overs)) $ Map.unionWith (+) leftovers new_left_overs
+            
+            newly_requested_ingredients = (Map.fromListWith (+) (ores ++(concat (map (ingredients) requested_conversions))))
+
+
+get_conversion_for_ingredient all_conversions leftovers ingredient
+    | (Map.findWithDefault 0 (fst ingredient) leftovers >= (snd ingredient)) = Nothing
+    | otherwise = Just (get_requested_conversion (fromJust (get_conversion_by_result_str (fst ingredient) all_conversions)) 1 (snd ingredient))
 
 trim :: String -> String
 trim = f . f where f = reverse . dropWhile isSpace
