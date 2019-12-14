@@ -19,9 +19,8 @@ day_14b = do
     let conversions = map to_conversion split_2
     print $ brute_force conversions 0 1000000000000 -- calc conversions (Map.fromList (ingredients fuel_conv)) Map.empty
 
--- 4052920
 brute_force conversions attempt factor
-    | result >= 1000000000000 && factor > 1 = trace ("scaling to precision: " ++ (show factor)) $ brute_force conversions (attempt - (10*factor)) (factor `div` 10)
+    | result >= 1000000000000 && factor > 1 = brute_force conversions (attempt - (factor `div` 2)) (factor `div` 2)
     | result >= 1000000000000 = attempt - 1
     | otherwise = brute_force conversions (attempt + factor) factor
         where 
