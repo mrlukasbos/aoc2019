@@ -136,6 +136,3 @@ digits n = map (\x -> read [x] :: Int) (show n)
 split :: Eq a => a -> [a] -> [[a]]
 split _ [] = []
 split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
-
--- a: 309
--- b: 15410
