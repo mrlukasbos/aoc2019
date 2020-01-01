@@ -8,7 +8,7 @@ data Moon = Moon {
     vel :: Int
 } deriving (Show, Eq)
 
-day_12b = gcds [(do_steps_with_mem (all_moons initial_positions_x) (all_moons initial_positions_x) 0), (do_steps_with_mem (all_moons initial_positions_y) (all_moons initial_positions_y) 0), (do_steps_with_mem (all_moons initial_positions_z) (all_moons initial_positions_z) 0)]
+day_12b = lcms [(do_steps_with_mem (all_moons initial_positions_x) (all_moons initial_positions_x) 0), (do_steps_with_mem (all_moons initial_positions_y) (all_moons initial_positions_y) 0), (do_steps_with_mem (all_moons initial_positions_z) (all_moons initial_positions_z) 0)]
 
 do_steps_with_mem :: [Moon] -> [Moon] -> Int -> Int
 do_steps_with_mem mem ref iteration
@@ -80,7 +80,7 @@ calc_acc a b
     | otherwise = 0
 
 
-gcds :: (Integral a) => [a] -> a
-gcds [] = 1
-gcds [x] = x
-gcds (x:xs) = lcm x (gcds xs)
+lcms :: (Integral a) => [a] -> a
+lcms [] = 1
+lcms [x] = x
+lcms (x:xs) = lcm x (lcms xs)
