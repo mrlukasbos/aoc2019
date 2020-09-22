@@ -24,7 +24,6 @@ fn main() {
 
     let outputs_part_2 = compute(&mut initial_program_state_2);
     println!("Part 2: {}", outputs_part_2.outputs.last().unwrap());
-    
 }
 
 #[derive(Clone)]
