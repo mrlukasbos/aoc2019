@@ -1,0 +1,5 @@
+﻿mul a 100
+mul b 100
+mul c 100
+mul d 100
+mul e 100
